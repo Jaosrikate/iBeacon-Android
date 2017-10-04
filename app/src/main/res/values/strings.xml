@@ -1,0 +1,17 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name">iBeaconDemo</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_settings">Settings</string>
+
+    <string name="uuid">Uuid</string>
+    <string name="major">Major</string>
+    <string name="minor">Minor</string>
+
+    <!-- Default values for beacon input -->
+    <string name="beacon_uuid" tools:ignore="TypographyDashes">bd850b7e-b86f-45ae-b88a-a880b667a102</string>
+    <string name="beacon_major">0</string>
+    <string name="beacon_minor">0</string>
+</resources>

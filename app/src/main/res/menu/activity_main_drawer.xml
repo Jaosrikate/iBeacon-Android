@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+
+        <item
+            android:id="@+id/nav_time_atten"
+            android:icon="@drawable/time_atte_icon"
+            android:title="Time Attendant" />
+        <item
+            android:id="@+id/nav_simulator"
+            android:icon="@drawable/ibeaco_logo"
+            android:title="iBeacon Simulator" />
+        <item
+            android:id="@+id/nav_scanner"
+            android:icon="@drawable/ibeaco_logo"
+            android:title="iBeacon Scanner" />
+
+</menu>
