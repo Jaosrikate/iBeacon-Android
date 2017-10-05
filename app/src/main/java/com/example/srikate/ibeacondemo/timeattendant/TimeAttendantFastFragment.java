@@ -22,6 +22,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.ekalips.fancybuttonproj.FancyButton;
 import com.example.srikate.ibeacondemo.R;
@@ -56,7 +57,7 @@ public class TimeAttendantFastFragment extends Fragment {
     private BluetoothAdapter btAdapter;
     private Handler scanHandler;
     private Handler mHandler;
-    private FancyButton checkinBtn;
+    private FancyButton checkInBtn;
     private Date date;
     private String dateTimeString;
     private String dateString;
@@ -101,15 +102,14 @@ public class TimeAttendantFastFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
         View v = inflater.inflate(R.layout.beacon_scanner_fragment, container, false);
-        checkinBtn = v.findViewById(R.id.checkinBtn);
-        checkinBtn.setOnClickListener(new View.OnClickListener() {
+        checkInBtn = v.findViewById(R.id.checkinBtn);
+        checkInBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Log.i(TAG, "Button is " + String.valueOf(checkinBtn.isExpanded()));
-                if (checkinBtn.isExpanded()) {
+                Log.i(TAG, "Button is " + String.valueOf(checkInBtn.isExpanded()));
+                if (checkInBtn.isExpanded()) {
                     if (getBlueToothOn()) {
                         startScan();
-
                     } else {
                         UiHelper.showInformationMessage(getActivity(), "Enable Bluetooth", "Please enable bluetooth before transmit iBeacon.",
                                 false, new DialogInterface.OnClickListener() {
@@ -122,12 +122,9 @@ public class TimeAttendantFastFragment extends Fragment {
                                     }
                                 });
                     }
-
                 } else {
                     stopScan();
-
                 }
-
             }
         });
         return v;
@@ -135,12 +132,12 @@ public class TimeAttendantFastFragment extends Fragment {
 
 
     private void startScan() {
-        checkinBtn.collapse();
+        checkInBtn.collapse();
         scanLeDevice(true);
     }
 
     private void stopScan() {
-        checkinBtn.expand();
+        checkInBtn.expand();
         scanLeDevice(false);
     }
 
@@ -151,35 +148,30 @@ public class TimeAttendantFastFragment extends Fragment {
                 @Override
                 public void run() {
                     Log.i(TAG, "BLE stop scan");
-
                     if (Build.VERSION.SDK_INT < 21) {
                         Log.i(TAG, "runnable stop SDK_INT < 21");
-
                         btAdapter.stopLeScan(leScanCallback);
                     } else {
                         Log.i(TAG, "runnable stop SDK_INT >= 21");
-
                         mLEScanner.stopScan(mScanCallback);
                     }
+                    checkInBtn.expand();
+                    if (!isShowDialog)
+                        Toast.makeText(getContext(), "Signal Not found. Please, Try again.", Toast.LENGTH_SHORT).show();
                 }
             }, SCAN_PERIOD);
             Log.i(TAG, "BLE start scan");
-
             if (Build.VERSION.SDK_INT < 21) {
                 Log.i(TAG, "start SDK_INT < 21");
-
                 btAdapter.startLeScan(leScanCallback);
             } else {
                 Log.i(TAG, "start SDK_INT >= 21");
-
                 mLEScanner.startScan(filters, settings, mScanCallback);
             }
         } else {
             Log.i(TAG, "BLE stop scan");
-
             if (Build.VERSION.SDK_INT < 21) {
                 Log.i(TAG, "stop SDK_INT < 21");
-
                 btAdapter.stopLeScan(leScanCallback);
             } else {
                 Log.i(TAG, "stop SDK_INT >= 21");
@@ -276,7 +268,7 @@ public class TimeAttendantFastFragment extends Fragment {
                                     if (databaseError != null) {
                                         Log.e(TAG, "Error save user");
                                     } else {
-                                        Snackbar.make(checkinBtn, "Saved", Snackbar.LENGTH_LONG).show();
+                                        Snackbar.make(checkInBtn, "Saved", Snackbar.LENGTH_LONG).show();
                                         isShowDialog = false;
                                     }
                                 }
