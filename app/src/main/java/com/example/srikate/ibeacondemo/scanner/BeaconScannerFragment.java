@@ -103,7 +103,7 @@ public class BeaconScannerFragment extends Fragment implements BeaconConsumer {
         final Region region = new Region("myBeaons", Identifier.parse(getString(R.string.beacon_uuid_simulator)), null, null);
         final Region region2 = new Region("myBeaons", Identifier.parse(getString(R.string.beacon_uuid)), null, null);
 
-        beaconManager.addMonitorNotifier(new MonitorNotifier() {
+        beaconManager.setMonitorNotifier(new MonitorNotifier() {
             @Override
             public void didEnterRegion(Region region) {
                 try {
@@ -132,7 +132,7 @@ public class BeaconScannerFragment extends Fragment implements BeaconConsumer {
             }
         });
 
-        beaconManager.addRangeNotifier(new RangeNotifier() {
+        beaconManager.setRangeNotifier(new RangeNotifier() {
             @Override
             public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
                 for (Beacon oneBeacon : beacons) {

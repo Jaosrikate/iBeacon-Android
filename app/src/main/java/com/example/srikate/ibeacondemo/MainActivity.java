@@ -13,16 +13,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.FrameLayout;
 
-import com.example.srikate.ibeacondemo.scanner.TimeAttendantFastFragment;
 import com.example.srikate.ibeacondemo.simulator.BeaconSimulatorFragment;
-import com.example.srikate.ibeacondemo.timeattendant.TimeAttendantFragment;
+import com.example.srikate.ibeacondemo.timeattendant.TimeAttendantFastFragment;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
-
-    private FrameLayout contactFrame;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,7 +36,7 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        TimeAttendantFragment fragment = TimeAttendantFragment.newInstance();
+        TimeAttendantFastFragment fragment = TimeAttendantFastFragment.newInstance();
         FragmentManager fragmentManager = getSupportFragmentManager();
         fragmentManager.beginTransaction().replace(R.id.contentFrame, fragment, null).disallowAddToBackStack().commit();
     }
@@ -83,12 +79,9 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
         Fragment fragment = null;
         if (id == R.id.nav_time_atten) {
-            // Handle the camera action
-            fragment = TimeAttendantFragment.newInstance();
+            fragment = TimeAttendantFastFragment.newInstance();
         } else if(id == R.id.nav_simulator){
             fragment = BeaconSimulatorFragment.newInstance();
-        }else{
-            fragment = TimeAttendantFastFragment.newInstance();
         }
 
         FragmentManager fragmentManager = getSupportFragmentManager();

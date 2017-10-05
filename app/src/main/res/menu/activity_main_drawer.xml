@@ -10,9 +10,9 @@
             android:id="@+id/nav_simulator"
             android:icon="@drawable/ibeaco_logo"
             android:title="iBeacon Simulator" />
-        <item
-            android:id="@+id/nav_scanner"
-            android:icon="@drawable/ibeaco_logo"
-            android:title="iBeacon Scanner" />
+        <!--<item-->
+            <!--android:id="@+id/nav_scanner"-->
+            <!--android:icon="@drawable/ibeaco_logo"-->
+            <!--android:title="iBeacon Scanner" />-->
 
 </menu>

@@ -1,10 +1,11 @@
-package com.example.srikate.ibeacondemo.scanner;
+package com.example.srikate.ibeacondemo.timeattendant;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
@@ -17,11 +18,17 @@ import android.widget.Toast;
 
 import com.ekalips.fancybuttonproj.FancyButton;
 import com.example.srikate.ibeacondemo.R;
+import com.example.srikate.ibeacondemo.model.CheckInModel;
 import com.example.srikate.ibeacondemo.utils.UiHelper;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Date;
+
+import static android.app.Activity.RESULT_OK;
 
 /**
  * Created by srikate on 10/5/2017 AD.
@@ -31,7 +38,7 @@ import java.util.Date;
 
 public class TimeAttendantFastFragment extends Fragment {
 
-    private static final String LOG_TAG = "TimeAttendantFast";
+    private static final String TAG = "TimeAttendantFast";
 
     private BluetoothManager btManager;
     private BluetoothAdapter btAdapter;
@@ -41,8 +48,11 @@ public class TimeAttendantFastFragment extends Fragment {
     private boolean isScanning = false;
     private FancyButton checkinBtn;
     private Date date;
+    private String dateTimeString;
     private String dateString;
+    private String timeString;
     private boolean isShowDialog;
+    private DatabaseReference databaseRef;
 
     public static TimeAttendantFastFragment newInstance() {
         return new TimeAttendantFastFragment();
@@ -57,8 +67,16 @@ public class TimeAttendantFastFragment extends Fragment {
         btManager = (BluetoothManager) getActivity().getSystemService(Context.BLUETOOTH_SERVICE);
         btAdapter = btManager.getAdapter();
         date = Calendar.getInstance().getTime();
-        dateString = DateFormat.getTimeInstance().format(date) + " (" + DateFormat.getDateInstance().format(date) + ")";
+
+        dateString = DateFormat.getDateInstance().format(date);
+        timeString = DateFormat.getTimeInstance().format(date);
+        dateTimeString = timeString + " (" + dateString + ")";
+
         initRunnable();
+
+        // Write a message to the database
+        databaseRef = FirebaseDatabase.getInstance().getReference();
+
     }
 
     private void initRunnable() {
@@ -92,16 +110,42 @@ public class TimeAttendantFastFragment extends Fragment {
             @Override
             public void onClick(View view) {
                 if (checkinBtn.isExpanded()) {
-                    checkinBtn.collapse();
-                    scanHandler.post(scanRunnable);
+                    if (getBlueToothOn()) {
+                        startScan();
+                    } else {
+                        UiHelper.showInformationMessage(getActivity(), "Enable Bluetooth", "Please enable bluetooth before transmit iBeacon.",
+                                false, new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialogInterface, int i) {
+                                        if (i == DialogInterface.BUTTON_POSITIVE) {
+                                            Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                                            startActivityForResult(enableIntent, 1);
+                                        }
+                                    }
+                                });
+                    }
+
                 } else {
-                    scanHandler.removeCallbacksAndMessages(null);
-                    checkinBtn.expand();
+                    stopScan();
                 }
 
             }
         });
         return v;
+    }
+
+    private void startScan() {
+        checkinBtn.collapse();
+        scanHandler.post(scanRunnable);
+    }
+
+    private void stopScan() {
+        checkinBtn.expand();
+        scanHandler.removeCallbacksAndMessages(null);
+    }
+
+    private boolean getBlueToothOn() {
+        return btAdapter != null && btAdapter.isEnabled();
     }
 
     // ------------------------------------------------------------------------
@@ -141,16 +185,29 @@ public class TimeAttendantFastFragment extends Fragment {
                 // minor
                 final int minor = (scanRecord[startByte + 22] & 0xff) * 0x100 + (scanRecord[startByte + 23] & 0xff);
 
-                Log.i(LOG_TAG, "UUID: " + uuid + "\\nmajor: " + major + "\\nminor" + minor);
+                Log.i(TAG, "UUID: " + uuid + "\\nmajor: " + major + "\\nminor" + minor);
+                final CheckInModel data = new CheckInModel("amonratk", dateString, timeString, uuid, String.valueOf(minor), String.valueOf(major));
+
                 if (uuid.equals(getString(R.string.beacon_uuid).toUpperCase()) || uuid.equals(getString(R.string.beacon_uuid_simulator).toUpperCase())) {
 
 
                     if (!isShowDialog) {
-                        UiHelper.showConfirmDialog(getContext(), "Check in at  " + dateString + "\n\n" + "bacon id : " + uuid, new DialogInterface.OnClickListener() {
+                        UiHelper.showConfirmDialog(getContext(), "Check in at  " + dateTimeString + "\n\n" + "bacon id : " + uuid, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialogInterface, int i) {
                                 if (i == DialogInterface.BUTTON_POSITIVE) {
                                     Toast.makeText(getContext(), "call service", Toast.LENGTH_LONG).show();
+
+                                    databaseRef.child("time_attendant").child("962").setValue(data, new DatabaseReference.CompletionListener() {
+                                        @Override
+                                        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+                                            if (databaseError != null) {
+                                                Log.e(TAG, "Save user to Firebase already");
+                                            } else {
+                                                Toast.makeText(getContext(), "Saved", Toast.LENGTH_LONG).show();
+                                            }
+                                        }
+                                    });
                                 }
                             }
                         });
@@ -158,16 +215,14 @@ public class TimeAttendantFastFragment extends Fragment {
                         isShowDialog = true;
                     }
 
+                    stopScan();
 
-                    checkinBtn.expand();
-                    scanHandler.removeCallbacksAndMessages(null);
-                    scanHandler.removeCallbacks(scanRunnable);
-                    btAdapter = null;
                 }
             }
 
         }
     };
+
 
     /**
      * bytesToHex method
@@ -188,5 +243,14 @@ public class TimeAttendantFastFragment extends Fragment {
     public void onDestroy() {
         super.onDestroy();
         scanHandler.removeCallbacksAndMessages(null);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode == RESULT_OK) {
+            startScan();
+        } else {
+            Log.e(TAG, "result not ok");
+        }
     }
 }

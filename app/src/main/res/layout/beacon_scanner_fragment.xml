@@ -24,7 +24,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/time_attendant"
-            android:textSize="22sp" />
+            android:textSize="20sp" />
 
     </LinearLayout>
 
@@ -41,6 +41,6 @@
         fnBtn:progressColor="@color/colorPrimary"
         fnBtn:strokeColor="@android:color/transparent"
         fnBtn:text="Check In"
-        fnBtn:textColor="#000" />
+        fnBtn:textColor="#ffffff" />
 
 </RelativeLayout>
