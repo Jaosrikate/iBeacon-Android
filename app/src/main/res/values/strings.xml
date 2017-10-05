@@ -11,7 +11,17 @@
     <string name="minor">Minor</string>
 
     <!-- Default values for beacon input -->
-    <string name="beacon_uuid" tools:ignore="TypographyDashes">bd850b7e-b86f-45ae-b88a-a880b667a102</string>
+    <string name="beacon_uuid" tools:ignore="TypographyDashes">954e6dac-5612-4642-b2d1-d253429db36b</string>
     <string name="beacon_major">0</string>
     <string name="beacon_minor">0</string>
+    <string name="btn_ok">Ok</string>
+    <string name="btn_cancel">Cancel</string>
+    <string name="btn_yes">Yes</string>
+    <string name="btn_no">No</string>
+    <string name="beacon_uuid_simulator">2f234454-cf6d-4a0f-adf2-f4911ba9ffa6</string>
+    <string name="beacon_minor_simulator">12</string>
+    <string name="beacon_major_simulator">5</string>
+    <string name="beacon_minor_simulator_text">Minor : 12</string>
+    <string name="beacon_major_simulator_text">Major : 5</string>
+    <string name="time_attendant">Time Attendant</string>
 </resources>

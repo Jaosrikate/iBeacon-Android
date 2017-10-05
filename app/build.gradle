@@ -5,8 +5,8 @@ android {
     buildToolsVersion "26.0.1"
     defaultConfig {
         applicationId "com.example.srikate.ibeacondemo"
-        minSdkVersion 15
-        targetSdkVersion 26
+        minSdkVersion 18
+        targetSdkVersion 21
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -33,4 +33,5 @@ dependencies {
     compile 'mobi.inthepocket.android:ibeaconscanner:1.2.2'
     compile 'io.reactivex:rxjava:1.2.0' // rxjava
     compile 'com.tbruyelle.rxpermissions:rxpermissions:0.7.0@aar' // library to handle location permission
+    compile 'com.ekalips.android:fancyprogressbutton:1.1.3'
 }

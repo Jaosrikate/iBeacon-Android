@@ -1,16 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:fnBtn="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:gravity="center_horizontal"
+    android:orientation="vertical">
 
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="@dimen/activity_vertical_margin">
+        android:layout_centerHorizontal="true"
+        android:layout_centerInParent="false"
+        android:layout_marginTop="30dp"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/tisco_logo" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/time_attendant"
+            android:textSize="22sp" />
 
     </LinearLayout>
 
-</ScrollView>
+    <com.ekalips.fancybuttonproj.FancyButton
+        android:id="@+id/checkinBtn"
+        android:clickable="false"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="@dimen/activity_horizontal_margin"
+        fnBtn:btnStyle="stroke_fill"
+        fnBtn:fillColor="@color/colorPrimary"
+        fnBtn:hideFillAfterCollapse="true"
+        fnBtn:progressColor="@color/colorPrimary"
+        fnBtn:strokeColor="@android:color/transparent"
+        fnBtn:text="Check In"
+        fnBtn:textColor="#000" />
+
+</RelativeLayout>

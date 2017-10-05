@@ -1,6 +1,7 @@
 package com.example.srikate.ibeacondemo;
 
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
@@ -13,6 +14,10 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.FrameLayout;
+
+import com.example.srikate.ibeacondemo.scanner.TimeAttendantFastFragment;
+import com.example.srikate.ibeacondemo.simulator.BeaconSimulatorFragment;
+import com.example.srikate.ibeacondemo.timeattendant.TimeAttendantFragment;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -83,7 +88,7 @@ public class MainActivity extends AppCompatActivity
         } else if(id == R.id.nav_simulator){
             fragment = BeaconSimulatorFragment.newInstance();
         }else{
-            fragment = BeaconScannerFragment.newInstance();
+            fragment = TimeAttendantFastFragment.newInstance();
         }
 
         FragmentManager fragmentManager = getSupportFragmentManager();
@@ -92,5 +97,10 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
     }
 }
