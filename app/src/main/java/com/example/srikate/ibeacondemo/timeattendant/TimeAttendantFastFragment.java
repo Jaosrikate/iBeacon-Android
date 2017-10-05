@@ -30,6 +30,7 @@ import com.example.srikate.ibeacondemo.utils.UiHelper;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -136,19 +137,11 @@ public class TimeAttendantFastFragment extends Fragment {
     private void startScan() {
         checkinBtn.collapse();
         scanLeDevice(true);
-//            btAdapter.startLeScan(leScanCallback);
-
-//        scanHandler.post(scanRunnable);
     }
 
     private void stopScan() {
         checkinBtn.expand();
         scanLeDevice(false);
-
-//        btAdapter.stopLeScan(leScanCallback);
-
-//        scanHandler.removeCallbacksAndMessages(null);
-
     }
 
 
@@ -167,7 +160,6 @@ public class TimeAttendantFastFragment extends Fragment {
                         Log.i(TAG, "runnable stop SDK_INT >= 21");
 
                         mLEScanner.stopScan(mScanCallback);
-
                     }
                 }
             }, SCAN_PERIOD);
@@ -202,74 +194,6 @@ public class TimeAttendantFastFragment extends Fragment {
             Log.i(TAG, "callbackType " + String.valueOf(callbackType));
             byte[] scanRecord = result.getScanRecord().getBytes();
             findBeaconPattern(scanRecord);
-//            int startByte = 2;
-//            boolean patternFound = false;
-//            while (startByte <= 5) {
-//                if (((int) scanRecord[startByte + 2] & 0xff) == 0x02 && //Identifies an iBeacon
-//                        ((int) scanRecord[startByte + 3] & 0xff) == 0x15) { //Identifies correct data length
-//                    patternFound = true;
-//                    break;
-//                }
-//                startByte++;
-//            }
-//
-//            if (patternFound) {
-//                //Convert to hex String
-//                byte[] uuidBytes = new byte[16];
-//                System.arraycopy(scanRecord, startByte + 4, uuidBytes, 0, 16);
-//                String hexString = bytesToHex(uuidBytes);
-//
-//                //UUID detection
-//                String uuid = hexString.substring(0, 8) + "-" +
-//                        hexString.substring(8, 12) + "-" +
-//                        hexString.substring(12, 16) + "-" +
-//                        hexString.substring(16, 20) + "-" +
-//                        hexString.substring(20, 32);
-//
-//                // major
-//                final int major = (scanRecord[startByte + 20] & 0xff) * 0x100 + (scanRecord[startByte + 21] & 0xff);
-//
-//                // minor
-//                final int minor = (scanRecord[startByte + 22] & 0xff) * 0x100 + (scanRecord[startByte + 23] & 0xff);
-//
-//                Log.i(TAG, "UUID: " + uuid + "\\nmajor: " + major + "\\nminor" + minor);
-//                final CheckInModel data = new CheckInModel("amonratk", dateString, timeString, uuid, String.valueOf(minor), String.valueOf(major));
-//
-//                if (uuid.equals(getString(R.string.beacon_uuid).toUpperCase()) || uuid.equals(getString(R.string.beacon_uuid_simulator).toUpperCase())) {
-//
-//
-//                    if (!isShowDialog) {
-//                        UiHelper.showConfirmDialog(getContext(), "Check in at  " + dateTimeString + "\n\n" + "bacon id : " + uuid, new DialogInterface.OnClickListener() {
-//                            @Override
-//                            public void onClick(DialogInterface dialogInterface, int i) {
-//                                if (i == DialogInterface.BUTTON_POSITIVE) {
-//                                    Toast.makeText(getContext(), "call service", Toast.LENGTH_LONG).show();
-//
-//                                    databaseRef.child("time_attendant").child("962").setValue(data, new DatabaseReference.CompletionListener() {
-//                                        @Override
-//                                        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-//                                            if (databaseError != null) {
-//                                                Log.e(TAG, "Save user to Firebase already");
-//                                            } else {
-//                                                Toast.makeText(getContext(), "Saved", Toast.LENGTH_LONG).show();
-//                                            }
-//                                        }
-//                                    });
-//                                }
-//                            }
-//                        });
-//
-//                        isShowDialog = true;
-//                    }
-//
-//                    stopScan();
-//
-//                }
-//            }
-//            Log.i(TAG, "BluetoothDevice UUID: " + String.valueOf(Arrays.toString(btDevice.getUuids()));
-//            Log.i(TAG, "BluetoothDevice Device name: " + String.valueOf(btDevice.getUuids()));
-//            Log.i(TAG, "result string " + result.toString());
-
         }
 
         @Override
@@ -295,71 +219,6 @@ public class TimeAttendantFastFragment extends Fragment {
         @Override
         public void onLeScan(final BluetoothDevice device, final int rssi, final byte[] scanRecord) {
             findBeaconPattern(scanRecord);
-//            int startByte = 2;
-//            boolean patternFound = false;
-//            while (startByte <= 5) {
-//                if (((int) scanRecord[startByte + 2] & 0xff) == 0x02 && //Identifies an iBeacon
-//                        ((int) scanRecord[startByte + 3] & 0xff) == 0x15) { //Identifies correct data length
-//                    patternFound = true;
-//                    break;
-//                }
-//                startByte++;
-//            }
-//
-//            if (patternFound) {
-//                //Convert to hex String
-//                byte[] uuidBytes = new byte[16];
-//                System.arraycopy(scanRecord, startByte + 4, uuidBytes, 0, 16);
-//                String hexString = bytesToHex(uuidBytes);
-//
-//                //UUID detection
-//                String uuid = hexString.substring(0, 8) + "-" +
-//                        hexString.substring(8, 12) + "-" +
-//                        hexString.substring(12, 16) + "-" +
-//                        hexString.substring(16, 20) + "-" +
-//                        hexString.substring(20, 32);
-//
-//                // major
-//                final int major = (scanRecord[startByte + 20] & 0xff) * 0x100 + (scanRecord[startByte + 21] & 0xff);
-//
-//                // minor
-//                final int minor = (scanRecord[startByte + 22] & 0xff) * 0x100 + (scanRecord[startByte + 23] & 0xff);
-//
-//                Log.i(TAG, "UUID: " + uuid + "\\nmajor: " + major + "\\nminor" + minor);
-//                final CheckInModel data = new CheckInModel("amonratk", dateString, timeString, uuid, String.valueOf(minor), String.valueOf(major));
-//
-//                if (uuid.equals(getString(R.string.beacon_uuid).toUpperCase()) || uuid.equals(getString(R.string.beacon_uuid_simulator).toUpperCase())) {
-//
-//
-//                    if (!isShowDialog) {
-//                        UiHelper.showConfirmDialog(getContext(), "Check in at  " + dateTimeString + "\n\n" + "bacon id : " + uuid, new DialogInterface.OnClickListener() {
-//                            @Override
-//                            public void onClick(DialogInterface dialogInterface, int i) {
-//                                if (i == DialogInterface.BUTTON_POSITIVE) {
-//                                    Toast.makeText(getContext(), "call service", Toast.LENGTH_LONG).show();
-//
-//                                    databaseRef.child("time_attendant").child("962").setValue(data, new DatabaseReference.CompletionListener() {
-//                                        @Override
-//                                        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-//                                            if (databaseError != null) {
-//                                                Log.e(TAG, "Save user to Firebase already");
-//                                            } else {
-//                                                Toast.makeText(getContext(), "Saved", Toast.LENGTH_LONG).show();
-//                                            }
-//                                        }
-//                                    });
-//                                }
-//                            }
-//                        });
-//
-//                        isShowDialog = true;
-//                    }
-//
-//                    stopScan();
-//
-//                }
-//            }
-
         }
     };
 
@@ -441,7 +300,7 @@ public class TimeAttendantFastFragment extends Fragment {
         timeString = DateFormat.getTimeInstance().format(date);
         dateTimeString = timeString + " (" + dateString + ")";
 
-        return  dateTimeString;
+        return dateTimeString;
     }
 
     /**
