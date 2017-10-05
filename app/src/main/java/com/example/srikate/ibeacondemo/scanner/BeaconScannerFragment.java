@@ -1,5 +1,6 @@
-package com.example.srikate.ibeacondemo;
+package com.example.srikate.ibeacondemo.scanner;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
@@ -12,6 +13,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.ekalips.fancybuttonproj.FancyButton;
+import com.example.srikate.ibeacondemo.R;
+import com.tbruyelle.rxpermissions.RxPermissions;
+
 import org.altbeacon.beacon.Beacon;
 import org.altbeacon.beacon.BeaconConsumer;
 import org.altbeacon.beacon.BeaconManager;
@@ -23,14 +28,18 @@ import org.altbeacon.beacon.Region;
 
 import java.util.Collection;
 
+import rx.Observer;
+
 /**
  * Created by srikate on 10/4/2017 AD.
+ * Source : https://github.com/AltBeacon/android-beacon-library
  */
 
 public class BeaconScannerFragment extends Fragment implements BeaconConsumer {
 
     private BeaconManager beaconManager;
     private static String TAG = "BeaconScannerFragment";
+    private FancyButton checkinBtn;
 
     public static BeaconScannerFragment newInstance() {
         return new BeaconScannerFragment();
@@ -45,7 +54,26 @@ public class BeaconScannerFragment extends Fragment implements BeaconConsumer {
         beaconManager.getBeaconParsers().add(new BeaconParser()
                 .setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24"));
 
-        beaconManager.bind(this);
+        RxPermissions.getInstance(getContext())
+                .request(Manifest.permission.ACCESS_COARSE_LOCATION)
+                .subscribe(new Observer<Boolean>() {
+                    @Override
+                    public void onCompleted() {
+
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onNext(Boolean granted) {
+                        checkinBtn.setEnabled(true);
+                    }
+                });
+
+
     }
 
     @Nullable
@@ -53,19 +81,35 @@ public class BeaconScannerFragment extends Fragment implements BeaconConsumer {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
         View v = inflater.inflate(R.layout.beacon_scanner_fragment, container, false);
+        checkinBtn = v.findViewById(R.id.checkinBtn);
+        checkinBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(checkinBtn.isExpanded()){
+                    checkinBtn.collapse();
+                    beaconManager.bind(BeaconScannerFragment.this);
+                }else{
+                    checkinBtn.expand();
+                    beaconManager.unbind(BeaconScannerFragment.this);
+                }
+
+            }
+        });
         return v;
     }
 
     @Override
     public void onBeaconServiceConnect() {
-        final Region region = new Region("myBeaons", Identifier.parse(getString(R.string.beacon_uuid)), null, null);
+        final Region region = new Region("myBeaons", Identifier.parse(getString(R.string.beacon_uuid_simulator)), null, null);
+        final Region region2 = new Region("myBeaons", Identifier.parse(getString(R.string.beacon_uuid)), null, null);
 
-        beaconManager.setMonitorNotifier(new MonitorNotifier() {
+        beaconManager.addMonitorNotifier(new MonitorNotifier() {
             @Override
             public void didEnterRegion(Region region) {
                 try {
                     Log.d(TAG, "didEnterRegion");
                     beaconManager.startRangingBeaconsInRegion(region);
+                    beaconManager.startRangingBeaconsInRegion(region2);
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }
@@ -76,6 +120,7 @@ public class BeaconScannerFragment extends Fragment implements BeaconConsumer {
                 try {
                     Log.d(TAG, "didExitRegion");
                     beaconManager.stopRangingBeaconsInRegion(region);
+                    beaconManager.stopRangingBeaconsInRegion(region2);
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }
@@ -87,7 +132,7 @@ public class BeaconScannerFragment extends Fragment implements BeaconConsumer {
             }
         });
 
-        beaconManager.setRangeNotifier(new RangeNotifier() {
+        beaconManager.addRangeNotifier(new RangeNotifier() {
             @Override
             public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
                 for (Beacon oneBeacon : beacons) {
@@ -98,6 +143,7 @@ public class BeaconScannerFragment extends Fragment implements BeaconConsumer {
 
         try {
             beaconManager.startMonitoringBeaconsInRegion(region);
+            beaconManager.startMonitoringBeaconsInRegion(region2);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
