@@ -28,9 +28,11 @@ import com.ekalips.fancybuttonproj.FancyButton;
 import com.example.srikate.ibeacondemo.R;
 import com.example.srikate.ibeacondemo.model.CheckInModel;
 import com.example.srikate.ibeacondemo.utils.UiHelper;
+import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
@@ -67,6 +69,7 @@ public class TimeAttendantFastFragment extends Fragment {
 
     private ScanSettings settings;
     private ArrayList<ScanFilter> filters;
+    boolean isOnline;
 
     public static TimeAttendantFastFragment newInstance() {
         return new TimeAttendantFastFragment();
@@ -262,17 +265,21 @@ public class TimeAttendantFastFragment extends Fragment {
                     public void onClick(DialogInterface dialogInterface, int i) {
                         if (i == DialogInterface.BUTTON_POSITIVE) {
 
-                            databaseRef.child("time_attendant").child("962").setValue(data, new DatabaseReference.CompletionListener() {
-                                @Override
-                                public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-                                    if (databaseError != null) {
-                                        Log.e(TAG, "Error save user");
-                                    } else {
-                                        Snackbar.make(checkInBtn, "Saved", Snackbar.LENGTH_LONG).show();
-                                        isShowDialog = false;
+                            if (isFirebaseDBConnected()) {
+                                databaseRef.child("time_attendant").child("962").setValue(data, new DatabaseReference.CompletionListener() {
+                                    @Override
+                                    public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+                                        if (databaseError != null) {
+                                            Log.e(TAG, "Error save user : " + databaseError.getMessage());
+                                        } else {
+                                            Snackbar.make(checkInBtn, "Saved", Snackbar.LENGTH_LONG).show();
+                                            isShowDialog = false;
+                                        }
                                     }
-                                }
-                            });
+                                });
+                            } else {
+                                UiHelper.showErrorMessage(getContext(), "Connection Problem. Please , Check your internet connection.");
+                            }
                         }
                     }
                 });
@@ -283,6 +290,31 @@ public class TimeAttendantFastFragment extends Fragment {
         } else {
             Log.i(TAG, "Its not TISCO Beacon");
         }
+    }
+
+    private boolean isFirebaseDBConnected() {
+
+        isOnline = false;
+
+        DatabaseReference connectedRef = FirebaseDatabase.getInstance().getReference(".info/connected");
+        connectedRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                boolean connected = snapshot.getValue(Boolean.class);
+                isOnline = connected;
+                if (connected) {
+                    System.out.println("connected");
+                } else {
+                    System.out.println("not connected");
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                System.err.println("Listener was cancelled");
+            }
+        });
+        return isOnline;
     }
 
     private String getCurrentDateTime() {
