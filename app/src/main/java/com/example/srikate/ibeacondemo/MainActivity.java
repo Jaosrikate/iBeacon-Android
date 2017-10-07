@@ -81,7 +81,7 @@ public class MainActivity extends AppCompatActivity
         Fragment fragment = null;
         if (id == R.id.nav_time_atten) {
             fragment = TimeAttendantFastFragment.newInstance();
-        } else if(id == R.id.nav_simulator){
+        } else if (id == R.id.nav_simulator) {
             fragment = BeaconSimulatorFragment.newInstance();
         }
 

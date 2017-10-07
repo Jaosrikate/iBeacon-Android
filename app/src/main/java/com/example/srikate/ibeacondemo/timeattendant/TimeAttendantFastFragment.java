@@ -1,5 +1,6 @@
 package com.example.srikate.ibeacondemo.timeattendant;
 
+import android.Manifest;
 import android.annotation.TargetApi;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -12,33 +13,61 @@ import android.bluetooth.le.ScanSettings;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentSender;
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.Settings;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.ekalips.fancybuttonproj.FancyButton;
 import com.example.srikate.ibeacondemo.R;
 import com.example.srikate.ibeacondemo.model.CheckInModel;
+import com.example.srikate.ibeacondemo.model.LocationModel;
+import com.example.srikate.ibeacondemo.utils.GPSTracker;
 import com.example.srikate.ibeacondemo.utils.UiHelper;
+import com.google.android.gms.awareness.snapshot.LocationResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResult;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketAddress;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 
 import static android.app.Activity.RESULT_OK;
 
@@ -49,7 +78,7 @@ import static android.app.Activity.RESULT_OK;
  */
 
 @TargetApi(21)
-public class TimeAttendantFastFragment extends Fragment {
+public class TimeAttendantFastFragment extends Fragment implements View.OnClickListener, ResultCallback<LocationSettingsResult> {
 
     private static final String TAG = "TimeAttendantFast";
 
@@ -60,16 +89,23 @@ public class TimeAttendantFastFragment extends Fragment {
     private Handler scanHandler;
     private Handler mHandler;
     private FancyButton checkInBtn;
-    private Date date;
-    private String dateTimeString;
-    private String dateString;
-    private String timeString;
+    private TextView tvEmpID;
+    private ImageView ivRandomEmp;
     private boolean isShowDialog;
     private DatabaseReference databaseRef;
 
     private ScanSettings settings;
     private ArrayList<ScanFilter> filters;
     boolean isOnline;
+    private String employeeID;
+    private GPSTracker gps;
+
+    private GoogleApiClient googleApiClient;
+    private LocationRequest locationRequest;
+
+    public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
+    public static final int REQUEST_CHECK_SETTINGS = 14;
+
 
     public static TimeAttendantFastFragment newInstance() {
         return new TimeAttendantFastFragment();
@@ -85,7 +121,7 @@ public class TimeAttendantFastFragment extends Fragment {
         // init BLE
         btManager = (BluetoothManager) getActivity().getSystemService(Context.BLUETOOTH_SERVICE);
         btAdapter = btManager.getAdapter();
-
+        employeeID = getRandomID();
 
         if (Build.VERSION.SDK_INT >= 21) {
             mLEScanner = btAdapter.getBluetoothLeScanner();
@@ -98,39 +134,45 @@ public class TimeAttendantFastFragment extends Fragment {
         // Write a message to the database
         databaseRef = FirebaseDatabase.getInstance().getReference();
 
+        settingLocationRequest();
+
+        checkLocationPermission();
+        if (isLocationEnabled()) {
+            gps = new GPSTracker(getContext());
+            Log.i("Location_Lat", getLat() + " " + getLon());
+        } else {
+            displayLocationSettingsRequest();
+        }
+
+    }
+
+    private void settingLocationRequest() {
+        googleApiClient = new GoogleApiClient.Builder(getContext())
+                .addApi(LocationServices.API).build();
+        locationRequest = LocationRequest.create();
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        locationRequest.setInterval(10000);
+        locationRequest.setFastestInterval(10000 / 2);
     }
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
-        View v = inflater.inflate(R.layout.beacon_scanner_fragment, container, false);
-        checkInBtn = v.findViewById(R.id.checkinBtn);
-        checkInBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Log.i(TAG, "Button is " + String.valueOf(checkInBtn.isExpanded()));
-                if (checkInBtn.isExpanded()) {
-                    if (getBlueToothOn()) {
-                        startScan();
-                    } else {
-                        UiHelper.showInformationMessage(getActivity(), "Enable Bluetooth", "Please enable bluetooth before transmit iBeacon.",
-                                false, new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialogInterface, int i) {
-                                        if (i == DialogInterface.BUTTON_POSITIVE) {
-                                            Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                                            startActivityForResult(enableIntent, 1);
-                                        }
-                                    }
-                                });
-                    }
-                } else {
-                    stopScan();
-                }
-            }
-        });
-        return v;
+        View view = inflater.inflate(R.layout.beacon_scanner_fragment, container, false);
+
+        checkInBtn = view.findViewById(R.id.checkinBtn);
+        tvEmpID = view.findViewById(R.id.tvEmpID);
+        ivRandomEmp = view.findViewById(R.id.ivRandomEmp);
+
+        checkInBtn.setOnClickListener(this);
+        ivRandomEmp.setOnClickListener(this);
+
+        setEmpID();
+
+        Log.i("onViewCreate", "es");
+
+        return view;
     }
 
 
@@ -255,7 +297,9 @@ public class TimeAttendantFastFragment extends Fragment {
 
     private void foundBeacon(String uuid, int major, int minor) {
 
-        final CheckInModel data = new CheckInModel("amonratk", dateString, timeString, uuid, String.valueOf(minor), String.valueOf(major));
+        final LocationModel locationModel = new LocationModel(getLat(), getLon());
+
+        final CheckInModel data = new CheckInModel("amonratk", getDateString(), getTimeString(), uuid, String.valueOf(minor), String.valueOf(major), locationModel);
 
         if (uuid.equals(getString(R.string.beacon_uuid).toUpperCase()) || uuid.equals(getString(R.string.beacon_uuid_simulator).toUpperCase())) {
 
@@ -265,21 +309,17 @@ public class TimeAttendantFastFragment extends Fragment {
                     public void onClick(DialogInterface dialogInterface, int i) {
                         if (i == DialogInterface.BUTTON_POSITIVE) {
 
-                            if (isFirebaseDBConnected()) {
-                                databaseRef.child("time_attendant").child("962").setValue(data, new DatabaseReference.CompletionListener() {
-                                    @Override
-                                    public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-                                        if (databaseError != null) {
-                                            Log.e(TAG, "Error save user : " + databaseError.getMessage());
-                                        } else {
-                                            Snackbar.make(checkInBtn, "Saved", Snackbar.LENGTH_LONG).show();
-                                            isShowDialog = false;
-                                        }
+                            databaseRef.child("time_attendant").child(employeeID).child(String.valueOf(getDate())).setValue(data, new DatabaseReference.CompletionListener() {
+                                @Override
+                                public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+                                    if (databaseError != null) {
+                                        Log.e(TAG, "Error save user : " + databaseError.getMessage());
+                                    } else {
+                                        Snackbar.make(checkInBtn, "Saved", Snackbar.LENGTH_LONG).show();
+                                        isShowDialog = false;
                                     }
-                                });
-                            } else {
-                                UiHelper.showErrorMessage(getContext(), "Connection Problem. Please , Check your internet connection.");
-                            }
+                                }
+                            });
                         }
                     }
                 });
@@ -318,13 +358,19 @@ public class TimeAttendantFastFragment extends Fragment {
     }
 
     private String getCurrentDateTime() {
-        date = Calendar.getInstance().getTime();
+        return getTimeString() + " (" + getDateString() + ")";
+    }
 
-        dateString = DateFormat.getDateInstance().format(date);
-        timeString = DateFormat.getTimeInstance().format(date);
-        dateTimeString = timeString + " (" + dateString + ")";
+    private Date getDate() {
+        return Calendar.getInstance().getTime();
+    }
 
-        return dateTimeString;
+    private String getDateString() {
+        return DateFormat.getDateInstance().format(getDate());
+    }
+
+    private String getTimeString() {
+        return DateFormat.getTimeInstance().format(getDate());
     }
 
     /**
@@ -350,10 +396,221 @@ public class TimeAttendantFastFragment extends Fragment {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode == RESULT_OK) {
+        if (resultCode == RESULT_OK && requestCode == 1) {
             startScan();
+        } else if (resultCode == RESULT_OK && requestCode == 14) {
+            gps = new GPSTracker(getContext());
         } else {
             Log.e(TAG, "result not ok");
+        }
+    }
+
+    public String getRandomID() {
+        Random rn = new Random();
+        String department = String.valueOf(rn.nextInt(15) + 1);
+        String id = String.valueOf(rn.nextInt(999) + 1);
+
+        String departmentPadding = String.format("%02d", Integer.parseInt(department));
+        String idPadding = String.format("%03d", Integer.parseInt(id));
+        return departmentPadding + "-" + idPadding;
+    }
+
+    @Override
+    public void onClick(View view) {
+        int id = view.getId();
+        switch (id) {
+            case R.id.checkinBtn: {
+                checkInBtnClicked();
+                break;
+            }
+            case R.id.ivRandomEmp: {
+                setEmpID();
+                break;
+            }
+        }
+    }
+
+    private void setEmpID() {
+        employeeID = getRandomID();
+        tvEmpID.setText(employeeID);
+    }
+
+    private void checkInBtnClicked() {
+        Log.i(TAG, "Button is " + String.valueOf(checkInBtn.isExpanded()));
+        if (checkInBtn.isExpanded()) {
+            if (isLocationEnabled()) {
+                gps = new GPSTracker(getContext());
+                if (getBlueToothOn()) {
+                    startScan();
+                } else {
+                    UiHelper.showInformationMessage(getActivity(), "Enable Bluetooth", "Please enable bluetooth before transmit iBeacon.",
+                            false, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    if (i == DialogInterface.BUTTON_POSITIVE) {
+                                        Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                                        startActivityForResult(enableIntent, 1);
+                                    }
+                                }
+                            });
+                }
+            } else {
+                displayLocationSettingsRequest();
+            }
+        } else {
+            stopScan();
+        }
+    }
+
+    private String getLat() {
+        if (gps != null) {
+            double latitude = gps.getLatitude();
+            return String.valueOf(latitude);
+        } else {
+            return null;
+        }
+    }
+
+    private String getLon() {
+        if (gps != null) {
+            double latitude = gps.getLongitude();
+            return String.valueOf(latitude);
+        } else {
+            return null;
+        }
+    }
+
+
+    public boolean checkLocationPermission() {
+        if (ContextCompat.checkSelfPermission(getActivity(),
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            // Should we show an explanation?
+            if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(),
+                    Manifest.permission.ACCESS_FINE_LOCATION)) {
+
+                // Show an explanation to the user *asynchronously* -- don't block
+                // this thread waiting for the user's response! After the user
+                // sees the explanation, try again to request the permission.
+                new AlertDialog.Builder(getContext())
+                        .setTitle(R.string.title_location_permission)
+                        .setMessage(R.string.text_location_permission)
+                        .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                //Prompt the user once explanation has been shown
+                                ActivityCompat.requestPermissions(getActivity(),
+                                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                                        MY_PERMISSIONS_REQUEST_LOCATION);
+                            }
+                        })
+                        .create()
+                        .show();
+
+
+            } else {
+                // No explanation needed, we can request the permission.
+                ActivityCompat.requestPermissions(getActivity(),
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                        MY_PERMISSIONS_REQUEST_LOCATION);
+            }
+            return false;
+        } else {
+            Log.i(TAG, "persmission granted");
+            return true;
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case MY_PERMISSIONS_REQUEST_LOCATION: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    // permission was granted, yay! Do the
+                    // location-related task you need to do.
+                    if (ContextCompat.checkSelfPermission(getContext(),
+                            Manifest.permission.ACCESS_FINE_LOCATION)
+                            == PackageManager.PERMISSION_GRANTED) {
+
+                        //Request location updates:
+//                        locationManager.requestLocationUpdates(provider, 400, 1, this);/
+                        gps = new GPSTracker(getContext());
+                    }
+
+                } else {
+
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+
+                }
+                return;
+            }
+
+        }
+    }
+
+    private boolean isLocationEnabled() {
+        int locationMode = 0;
+        String locationProviders;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            try {
+                locationMode = Settings.Secure.getInt(getContext().getContentResolver(), Settings.Secure.LOCATION_MODE);
+
+            } catch (Settings.SettingNotFoundException e) {
+                e.printStackTrace();
+                return false;
+            }
+
+            return locationMode != Settings.Secure.LOCATION_MODE_OFF;
+
+        } else {
+            locationProviders = Settings.Secure.getString(getContext().getContentResolver(), Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
+            return !TextUtils.isEmpty(locationProviders);
+        }
+    }
+
+    private synchronized void displayLocationSettingsRequest() {
+
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder().addLocationRequest(locationRequest);
+        builder.setAlwaysShow(true);
+
+        PendingResult<LocationSettingsResult> result = LocationServices.SettingsApi.checkLocationSettings(googleApiClient, builder.build());
+        result.setResultCallback(this);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        googleApiClient.connect();
+    }
+
+    @Override
+    public void onResult(@NonNull LocationSettingsResult locationSettingsResult) {
+        final Status status = locationSettingsResult.getStatus();
+        switch (status.getStatusCode()) {
+            case LocationSettingsStatusCodes.SUCCESS:
+                Log.i(TAG, "All location settings are satisfied.");
+                break;
+            case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                Log.i(TAG, "Location settings are not satisfied. Show the user a dialog to upgrade location settings ");
+
+                try {
+                    // Show the dialog by calling startResolutionForResult(), and check the result
+                    // in onActivityResult().
+                    status.startResolutionForResult(getActivity(), REQUEST_CHECK_SETTINGS);
+                } catch (IntentSender.SendIntentException e) {
+                    Log.i(TAG, "PendingIntent unable to execute request.");
+                }
+                break;
+            case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                Log.i(TAG, "Location settings are inadequate, and cannot be fixed here. Dialog not created.");
+                break;
         }
     }
 }

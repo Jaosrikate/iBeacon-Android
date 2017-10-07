@@ -12,6 +12,11 @@ public class CheckInModel {
     public String beaconID;
     public String minor;
     public String major;
+    public LocationModel location;
+
+    public LocationModel getLocation() {
+        return location;
+    }
 
     public String getUsername() {
         return username;
@@ -37,13 +42,15 @@ public class CheckInModel {
         return major;
     }
 
-    public CheckInModel(String username, String date, String time, String beaconID, String minor, String major) {
+
+    public CheckInModel(String username, String date, String time, String beaconID, String minor, String major, LocationModel location) {
         this.username = username;
         this.date = date;
         this.time = time;
         this.beaconID = beaconID;
         this.minor = minor;
         this.major = major;
+        this.location = location;
     }
 
     @Override
@@ -55,6 +62,7 @@ public class CheckInModel {
                 ", beaconID='" + beaconID + '\'' +
                 ", minor='" + minor + '\'' +
                 ", major='" + major + '\'' +
+                ", location=" + location +
                 '}';
     }
 }

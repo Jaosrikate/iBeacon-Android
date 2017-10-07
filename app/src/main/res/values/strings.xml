@@ -24,4 +24,7 @@
     <string name="beacon_minor_simulator_text">Minor : 12</string>
     <string name="beacon_major_simulator_text">Major : 5</string>
     <string name="time_attendant">Time Attendant</string>
+    <string name="title_location_permission">Location access</string>
+    <string name="text_location_permission">Allow access yor location</string>
+    <string name="ok">ok</string>
 </resources>

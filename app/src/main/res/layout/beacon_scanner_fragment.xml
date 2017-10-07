@@ -3,6 +3,7 @@
     xmlns:fnBtn="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/tools"
     android:gravity="center_horizontal"
     android:orientation="vertical">
 
@@ -26,15 +27,38 @@
             android:text="@string/time_attendant"
             android:textSize="20sp" />
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="5dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/editText2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Employee ID : "
+                android:textSize="10sp" />
+
+            <TextView
+                android:id="@+id/tvEmpID"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="3dp"
+                android:text="962"
+                android:textSize="10sp" />
+        </LinearLayout>
+
     </LinearLayout>
 
     <com.ekalips.fancybuttonproj.FancyButton
         android:id="@+id/checkinBtn"
-        android:clickable="false"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_marginBottom="@dimen/activity_horizontal_margin"
+        android:clickable="false"
         fnBtn:btnStyle="stroke_fill"
         fnBtn:fillColor="@color/colorPrimary"
         fnBtn:hideFillAfterCollapse="true"
@@ -42,5 +66,14 @@
         fnBtn:strokeColor="@android:color/transparent"
         fnBtn:text="Check In"
         fnBtn:textColor="#ffffff" />
+
+    <ImageView
+        android:id="@+id/ivRandomEmp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_margin="10dp"
+        android:src="@drawable/ic_person_add_white_24dp"
+        android:tint="@color/colorPrimary" />
 
 </RelativeLayout>
