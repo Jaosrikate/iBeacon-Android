@@ -50,7 +50,7 @@ public class TimeAttendantFragment extends Fragment implements IBeaconScanner.Ca
         IBeaconScanner.getInstance().setCallback(this);
         setupBeacon();
         date = Calendar.getInstance().getTime();
-        dateString = DateFormat.getTimeInstance().format(date) + " (" + DateFormat.getDateInstance().format(date) +")";
+        dateString = DateFormat.getTimeInstance().format(date) + " (" + DateFormat.getDateInstance().format(date) + ")";
 
     }
 
@@ -121,7 +121,7 @@ public class TimeAttendantFragment extends Fragment implements IBeaconScanner.Ca
     @Override
     public void didEnterBeacon(Beacon beacon) {
         stopScanner();
-        UiHelper.showConfirmDialog(getContext(), "Check in at  " + dateString + "\n\n" + "bacon id : " + beacon.getUUID(), new DialogInterface.OnClickListener() {
+        UiHelper.showConfirmDialog(getContext(), null, "Check in at  " + dateString + "\n\n" + "bacon id : " + beacon.getUUID(), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 if (i == DialogInterface.BUTTON_POSITIVE) {

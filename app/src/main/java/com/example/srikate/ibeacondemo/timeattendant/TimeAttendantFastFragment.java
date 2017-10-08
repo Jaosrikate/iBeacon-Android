@@ -15,6 +15,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -50,11 +52,9 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
-import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
@@ -90,7 +90,6 @@ public class TimeAttendantFastFragment extends Fragment implements View.OnClickL
 
     private ScanSettings settings;
     private ArrayList<ScanFilter> filters;
-    boolean isOnline;
     private String employeeID;
     private GPSTracker gps;
 
@@ -110,12 +109,31 @@ public class TimeAttendantFastFragment extends Fragment implements View.OnClickL
         super.onCreate(savedInstanceState);
         isShowDialog = false;
         scanHandler = new Handler();
-
         mHandler = new Handler();
+        employeeID = getRandomID();
+
+        settingBlueTooth();
+
+        // Write a message to the database
+        databaseRef = FirebaseDatabase.getInstance().getReference();
+
+        settingLocationRequest();
+
+        checkLocationPermission();
+
+        if (isLocationEnabled()) {
+            gps = new GPSTracker(getContext());
+            Log.i("Location_Lat", getLat() + " " + getLon());
+        } else {
+            displayLocationSettingsRequest();
+        }
+
+    }
+
+    private void settingBlueTooth() {
         // init BLE
         btManager = (BluetoothManager) getActivity().getSystemService(Context.BLUETOOTH_SERVICE);
         btAdapter = btManager.getAdapter();
-        employeeID = getRandomID();
 
         if (Build.VERSION.SDK_INT >= 21) {
             mLEScanner = btAdapter.getBluetoothLeScanner();
@@ -124,20 +142,6 @@ public class TimeAttendantFastFragment extends Fragment implements View.OnClickL
                     .build();
             filters = new ArrayList<ScanFilter>();
         }
-
-        // Write a message to the database
-        databaseRef = FirebaseDatabase.getInstance().getReference();
-
-        settingLocationRequest();
-
-        checkLocationPermission();
-        if (isLocationEnabled()) {
-            gps = new GPSTracker(getContext());
-            Log.i("Location_Lat", getLat() + " " + getLon());
-        } else {
-            displayLocationSettingsRequest();
-        }
-
     }
 
     private void settingLocationRequest() {
@@ -241,7 +245,7 @@ public class TimeAttendantFastFragment extends Fragment implements View.OnClickL
     };
 
 
-    private boolean getBlueToothOn() {
+    private boolean isBlueToothOn() {
         return btAdapter != null && btAdapter.isEnabled();
     }
 
@@ -295,25 +299,17 @@ public class TimeAttendantFastFragment extends Fragment implements View.OnClickL
 
         final CheckInModel data = new CheckInModel("amonratk", getDateString(), getTimeString(), uuid, String.valueOf(minor), String.valueOf(major), locationModel);
 
-        if (uuid.equals(getString(R.string.beacon_uuid).toUpperCase()) || uuid.equals(getString(R.string.beacon_uuid_simulator).toUpperCase())) {
-
+        if (uuid.equals(getString(R.string.beacon_uuid).toUpperCase())
+                || uuid.equals(getString(R.string.beacon_uuid_simulator).toUpperCase())) {
+            Log.e(TAG, "isShowDialog : " + isShowDialog);
             if (!isShowDialog) {
-                UiHelper.showConfirmDialog(getContext(), "Check in at  " + getCurrentDateTime() + "\n\n" + "Beacon id : " + uuid, new DialogInterface.OnClickListener() {
+                UiHelper.showConfirmDialog(getContext(), "Time Attendant Confirmation", "Check In at  " + getCurrentDateTime(), false, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         if (i == DialogInterface.BUTTON_POSITIVE) {
-
-                            databaseRef.child("time_attendant").child(employeeID).child(String.valueOf(getDate())).setValue(data, new DatabaseReference.CompletionListener() {
-                                @Override
-                                public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-                                    if (databaseError != null) {
-                                        Log.e(TAG, "Error save user : " + databaseError.getMessage());
-                                    } else {
-                                        Snackbar.make(checkInBtn, "Saved", Snackbar.LENGTH_LONG).show();
-                                        isShowDialog = false;
-                                    }
-                                }
-                            });
+                            saveToFirebase(data);
+                        } else {
+                            isShowDialog = false;
                         }
                     }
                 });
@@ -326,29 +322,24 @@ public class TimeAttendantFastFragment extends Fragment implements View.OnClickL
         }
     }
 
-    private boolean isFirebaseDBConnected() {
+    private void saveToFirebase(CheckInModel data) {
+        databaseRef
+                .child("time_attendant")
+                .child(employeeID)
+                .child(String.valueOf(getDate()))
+                .setValue(data, new DatabaseReference.CompletionListener() {
+                    @Override
+                    public void onComplete(final DatabaseError databaseError, DatabaseReference databaseReference) {
+                        if (databaseError != null) {
+                            Log.i(TAG, "Error save user : " + databaseError.getDetails());
+                            isShowDialog = false;
+                        } else {
+                            Snackbar.make(checkInBtn, "Saved", Snackbar.LENGTH_LONG).show();
+                            isShowDialog = false;
+                        }
+                    }
 
-        isOnline = false;
-
-        DatabaseReference connectedRef = FirebaseDatabase.getInstance().getReference(".info/connected");
-        connectedRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot snapshot) {
-                boolean connected = snapshot.getValue(Boolean.class);
-                isOnline = connected;
-                if (connected) {
-                    System.out.println("connected");
-                } else {
-                    System.out.println("not connected");
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError error) {
-                System.err.println("Listener was cancelled");
-            }
-        });
-        return isOnline;
+                });
     }
 
     private String getCurrentDateTime() {
@@ -391,6 +382,7 @@ public class TimeAttendantFastFragment extends Fragment implements View.OnClickL
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == RESULT_OK && requestCode == 1) {
+            settingBlueTooth();
             startScan();
         } else if (resultCode == RESULT_OK && requestCode == 14) {
             gps = new GPSTracker(getContext());
@@ -432,28 +424,48 @@ public class TimeAttendantFastFragment extends Fragment implements View.OnClickL
     private void checkInBtnClicked() {
         Log.i(TAG, "Button is " + String.valueOf(checkInBtn.isExpanded()));
         if (checkInBtn.isExpanded()) {
-            if (isLocationEnabled()) {
-                gps = new GPSTracker(getContext());
-                if (getBlueToothOn()) {
-                    startScan();
-                } else {
-                    UiHelper.showInformationMessage(getActivity(), "Enable Bluetooth", "Please enable bluetooth before transmit iBeacon.",
-                            false, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialogInterface, int i) {
-                                    if (i == DialogInterface.BUTTON_POSITIVE) {
-                                        Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                                        startActivityForResult(enableIntent, 1);
-                                    }
-                                }
-                            });
-                }
-            } else {
+
+            boolean isValid = true;
+
+            if (!isLocationEnabled()) {
+                isValid = false;
                 displayLocationSettingsRequest();
             }
+
+            if (!isBlueToothOn()) {
+                isValid = false;
+                UiHelper.showInformationMessage(getActivity(), "Enable Bluetooth", "Please enable bluetooth before check in.",
+                        false, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                if (i == DialogInterface.BUTTON_POSITIVE) {
+                                    Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                                    startActivityForResult(enableIntent, 1);
+                                }
+                            }
+                        });
+            }
+
+            if (!isOnline()) {
+                isValid = false;
+                UiHelper.showInformationMessage(getContext(), "No Internet Access.", "Please , check your connection.", false);
+            }
+
+            if (isValid) {
+                gps = new GPSTracker(getContext());
+                startScan();
+            }
+
         } else {
             stopScan();
         }
+    }
+
+    public boolean isOnline() {
+        ConnectivityManager cm =
+                (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        return netInfo != null && netInfo.isConnectedOrConnecting();
     }
 
     private String getLat() {

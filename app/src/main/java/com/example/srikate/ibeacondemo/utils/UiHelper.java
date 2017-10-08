@@ -66,12 +66,13 @@ public class UiHelper {
         builder.show();
     }
 
-    public static void showConfirmDialog(Context context, String message, DialogInterface.OnClickListener listener) {
-        showConfirmDialog(context, message, false, listener);
+    public static void showConfirmDialog(Context context, String title, String message, DialogInterface.OnClickListener listener) {
+        showConfirmDialog(context, title, message, false, listener);
     }
 
-    public static void showConfirmDialog(Context context, String message, boolean cancelable, DialogInterface.OnClickListener listener) {
+    public static void showConfirmDialog(Context context,String title, String message, boolean cancelable, DialogInterface.OnClickListener listener) {
         builder = new AlertDialog.Builder(context);
+        builder.setTitle(title);
         builder.setMessage(message);
         builder.setPositiveButton(R.string.btn_ok, listener);
         builder.setNegativeButton(R.string.btn_cancel, listener);
