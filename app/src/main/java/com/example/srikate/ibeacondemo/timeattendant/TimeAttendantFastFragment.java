@@ -39,6 +39,7 @@ import android.widget.Toast;
 
 import com.ekalips.fancybuttonproj.FancyButton;
 import com.example.srikate.ibeacondemo.R;
+import com.example.srikate.ibeacondemo.model.BeaconDeviceModel;
 import com.example.srikate.ibeacondemo.model.CheckInModel;
 import com.example.srikate.ibeacondemo.model.LocationModel;
 import com.example.srikate.ibeacondemo.utils.GPSTracker;
@@ -52,9 +53,11 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
@@ -96,6 +99,8 @@ public class TimeAttendantFastFragment extends Fragment implements View.OnClickL
     private GoogleApiClient googleApiClient;
     private LocationRequest locationRequest;
 
+    private List<String> beaconDeviceList = new ArrayList<>();
+
     public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
     public static final int REQUEST_CHECK_SETTINGS = 14;
 
@@ -118,8 +123,8 @@ public class TimeAttendantFastFragment extends Fragment implements View.OnClickL
         databaseRef = FirebaseDatabase.getInstance().getReference();
 
         settingLocationRequest();
-
         checkLocationPermission();
+        getBeaconDevice();
 
         if (isLocationEnabled()) {
             gps = new GPSTracker(getContext());
@@ -140,7 +145,7 @@ public class TimeAttendantFastFragment extends Fragment implements View.OnClickL
             settings = new ScanSettings.Builder()
                     .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
                     .build();
-            filters = new ArrayList<ScanFilter>();
+            filters = new ArrayList<>();
         }
     }
 
@@ -299,32 +304,33 @@ public class TimeAttendantFastFragment extends Fragment implements View.OnClickL
 
         final CheckInModel data = new CheckInModel("amonratk", getDateString(), getTimeString(), uuid, String.valueOf(minor), String.valueOf(major), locationModel);
 
-        if (uuid.equals(getString(R.string.beacon_uuid).toUpperCase())
-                || uuid.equals(getString(R.string.beacon_uuid_simulator).toUpperCase())) {
-            Log.e(TAG, "isShowDialog : " + isShowDialog);
-            if (!isShowDialog) {
-                UiHelper.showConfirmDialog(getContext(), "Time Attendant Confirmation", "Check In at  " + getCurrentDateTime(), false, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        if (i == DialogInterface.BUTTON_POSITIVE) {
-                            saveToFirebase(data);
-                        } else {
-                            isShowDialog = false;
+        for (String device : beaconDeviceList) {
+            if (uuid.toUpperCase().equals(device.toUpperCase())) {
+                Log.e(TAG, "isShowDialog : " + isShowDialog);
+                if (!isShowDialog) {
+                    UiHelper.showConfirmDialog(getContext(), "Time Attendant Confirmation", "Check In at  " + getCurrentDateTime(), false, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            if (i == DialogInterface.BUTTON_POSITIVE) {
+                                saveToFirebase(data);
+                            } else {
+                                isShowDialog = false;
+                            }
                         }
-                    }
-                });
+                    });
 
-                isShowDialog = true;
+                    isShowDialog = true;
+                }
+                stopScan();
+            } else {
+                Log.i(TAG, "Its not TISCO Beacon");
             }
-            stopScan();
-        } else {
-            Log.i(TAG, "Its not TISCO Beacon");
         }
     }
 
     private void saveToFirebase(CheckInModel data) {
         databaseRef
-                .child("time_attendant")
+                .child("time_attendance")
                 .child(employeeID)
                 .child(String.valueOf(getDate()))
                 .setValue(data, new DatabaseReference.CompletionListener() {
@@ -618,5 +624,25 @@ public class TimeAttendantFastFragment extends Fragment implements View.OnClickL
                 Log.i(TAG, "Location settings are inadequate, and cannot be fixed here. Dialog not created.");
                 break;
         }
+    }
+
+    public void getBeaconDevice() {
+        databaseRef.child("beacon_device").addListenerForSingleValueEvent(
+                new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        // Get beacon device from database
+                        if (dataSnapshot.getValue() != null) {
+                            BeaconDeviceModel beaconDevice = dataSnapshot.getValue(BeaconDeviceModel.class);
+                            beaconDeviceList = beaconDevice.getDeviceID();
+                            Log.i(TAG, beaconDeviceList.toString());
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
     }
 }

@@ -5,11 +5,11 @@
         <item
             android:id="@+id/nav_time_atten"
             android:icon="@drawable/time_atte_icon"
-            android:title="Time Attendant" />
+            android:title="@string/time_attendant" />
         <item
             android:id="@+id/nav_simulator"
             android:icon="@drawable/ibeaco_logo"
-            android:title="iBeacon Simulator" />
+            android:title="@string/iBeacon_simulator" />
         <!--<item-->
             <!--android:id="@+id/nav_scanner"-->
             <!--android:icon="@drawable/ibeaco_logo"-->
