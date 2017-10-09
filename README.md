@@ -83,7 +83,7 @@ if (Build.VERSION.SDK_INT < 21) {
      mLEScanner.startScan(filters, settings, mScanCallback);
 }
 ```
-#### Scancallback - Retrived ScanResult to Byte
+#### Scancallback - Retrieved ScanResult to Byte
 
 ```
     private ScanCallback mScanCallback = new ScanCallback() {
