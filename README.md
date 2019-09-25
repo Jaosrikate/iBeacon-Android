@@ -2,6 +2,17 @@
 
 Example android application for iBeacon simulator and scanner.
 
+# App Demo features
+
+iBeacon Simulator
+
+![simu](https://github.com/Jaosrikate/iBeacon-Android/blob/master/demo/simulatior.gif?raw=true)
+
+iBeacon Scanner
+
+![scanner](https://github.com/Jaosrikate/iBeacon-Android/blob/master/demo/scanner.gif?raw=true)
+
+
 ## Simulator
 Referance Library : https://github.com/AltBeacon/android-beacon-library
 
