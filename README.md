@@ -6,11 +6,11 @@ Example android application for iBeacon simulator and scanner.
 
 iBeacon Simulator
 
-![simu](https://github.com/Jaosrikate/iBeacon-Android/blob/master/demo/simulatior.gif?raw=true)
+<img src="https://github.com/Jaosrikate/iBeacon-Android/blob/master/demo/simulatior.gif?raw=true" width="250">
 
 iBeacon Scanner
 
-![scanner](https://github.com/Jaosrikate/iBeacon-Android/blob/master/demo/scanner.gif?raw=true)
+<img src="https://github.com/Jaosrikate/iBeacon-Android/blob/master/demo/scanner.gif?raw=true" width="250">
 
 
 ## Simulator
