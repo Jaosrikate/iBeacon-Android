@@ -6,14 +6,14 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.RemoteException;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 
-import com.ekalips.fancybuttonproj.FancyButton;
 import com.example.srikate.ibeacondemo.R;
 import com.tbruyelle.rxpermissions.RxPermissions;
 
@@ -39,7 +39,7 @@ public class BeaconScannerFragment extends Fragment implements BeaconConsumer {
 
     private BeaconManager beaconManager;
     private static String TAG = "BeaconScannerFragment";
-    private FancyButton checkinBtn;
+    private Button checkinBtn;
 
     public static BeaconScannerFragment newInstance() {
         return new BeaconScannerFragment();
@@ -85,11 +85,13 @@ public class BeaconScannerFragment extends Fragment implements BeaconConsumer {
         checkinBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(checkinBtn.isExpanded()){
-                    checkinBtn.collapse();
+                if(checkinBtn.isClickable()){
+//                    checkinBtn.collapse();
+                    checkinBtn.setClickable(true);
                     beaconManager.bind(BeaconScannerFragment.this);
                 }else{
-                    checkinBtn.expand();
+//                    checkinBtn.expand();
+                    checkinBtn.setClickable(false);
                     beaconManager.unbind(BeaconScannerFragment.this);
                 }
 

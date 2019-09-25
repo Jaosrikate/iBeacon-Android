@@ -21,25 +21,25 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AlertDialog;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.Fragment;
+import androidx.core.content.ContextCompat;
+import androidx.appcompat.app.AlertDialog;
+
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.ekalips.fancybuttonproj.FancyButton;
 import com.example.srikate.ibeacondemo.R;
-import com.example.srikate.ibeacondemo.model.BeaconDeviceModel;
 import com.example.srikate.ibeacondemo.model.CheckInModel;
 import com.example.srikate.ibeacondemo.model.LocationModel;
 import com.example.srikate.ibeacondemo.utils.GPSTracker;
@@ -53,11 +53,7 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
+import com.google.android.material.snackbar.Snackbar;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
@@ -85,11 +81,10 @@ public class TimeAttendantFastFragment extends Fragment implements View.OnClickL
     private BluetoothAdapter btAdapter;
     private Handler scanHandler;
     private Handler mHandler;
-    private FancyButton checkInBtn;
+    private Button checkInBtn;
     private TextView tvEmpID;
     private ImageView ivRandomEmp;
     private boolean isShowDialog;
-    private DatabaseReference databaseRef;
 
     private ScanSettings settings;
     private ArrayList<ScanFilter> filters;
@@ -101,8 +96,8 @@ public class TimeAttendantFastFragment extends Fragment implements View.OnClickL
 
     private List<String> beaconDeviceList = new ArrayList<>();
 
-    public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
-    public static final int REQUEST_CHECK_SETTINGS = 14;
+    private static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
+    private static final int REQUEST_CHECK_SETTINGS = 14;
 
 
     public static TimeAttendantFastFragment newInstance() {
@@ -118,9 +113,6 @@ public class TimeAttendantFastFragment extends Fragment implements View.OnClickL
         employeeID = getRandomID();
 
         settingBlueTooth();
-
-        // Write a message to the database
-        databaseRef = FirebaseDatabase.getInstance().getReference();
 
         settingLocationRequest();
         checkLocationPermission();
@@ -180,12 +172,12 @@ public class TimeAttendantFastFragment extends Fragment implements View.OnClickL
 
 
     private void startScan() {
-        checkInBtn.collapse();
+        checkInBtn.setClickable(false);
         scanLeDevice(true);
     }
 
     private void stopScan() {
-        checkInBtn.expand();
+        checkInBtn.setClickable(true);
         scanLeDevice(false);
     }
 
@@ -203,7 +195,7 @@ public class TimeAttendantFastFragment extends Fragment implements View.OnClickL
                         Log.i(TAG, "runnable stop SDK_INT >= 21");
                         mLEScanner.stopScan(mScanCallback);
                     }
-                    checkInBtn.expand();
+                    checkInBtn.setClickable(true);
                     if (!isShowDialog)
                         Toast.makeText(getContext(), "Signal Not found. Please, Try again.", Toast.LENGTH_SHORT).show();
                 }
@@ -231,7 +223,7 @@ public class TimeAttendantFastFragment extends Fragment implements View.OnClickL
     private ScanCallback mScanCallback = new ScanCallback() {
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
-            Log.i(TAG, "callbackType " + String.valueOf(callbackType));
+            Log.i(TAG, "callbackType " + callbackType);
             byte[] scanRecord = result.getScanRecord().getBytes();
             findBeaconPattern(scanRecord);
         }
@@ -305,7 +297,7 @@ public class TimeAttendantFastFragment extends Fragment implements View.OnClickL
         final CheckInModel data = new CheckInModel("amonratk", getDateString(), getTimeString(), uuid, String.valueOf(minor), String.valueOf(major), locationModel);
 
         for (String device : beaconDeviceList) {
-            if (uuid.toUpperCase().equals(device.toUpperCase())) {
+            if (uuid.equalsIgnoreCase(device)) {
                 Log.e(TAG, "isShowDialog : " + isShowDialog);
                 if (!isShowDialog) {
                     UiHelper.showConfirmDialog(getContext(), "Time Attendant Confirmation", "Check In at  " + getCurrentDateTime(), false, new DialogInterface.OnClickListener() {
@@ -329,23 +321,8 @@ public class TimeAttendantFastFragment extends Fragment implements View.OnClickL
     }
 
     private void saveToFirebase(CheckInModel data) {
-        databaseRef
-                .child("time_attendance")
-                .child(employeeID)
-                .child(String.valueOf(getDate()))
-                .setValue(data, new DatabaseReference.CompletionListener() {
-                    @Override
-                    public void onComplete(final DatabaseError databaseError, DatabaseReference databaseReference) {
-                        if (databaseError != null) {
-                            Log.i(TAG, "Error save user : " + databaseError.getDetails());
-                            isShowDialog = false;
-                        } else {
-                            Snackbar.make(checkInBtn, "Saved", Snackbar.LENGTH_LONG).show();
-                            isShowDialog = false;
-                        }
-                    }
-
-                });
+        //sent the data to services
+        Snackbar.make(checkInBtn, employeeID + " is Checked in.", Snackbar.LENGTH_SHORT).show();
     }
 
     private String getCurrentDateTime() {
@@ -428,8 +405,7 @@ public class TimeAttendantFastFragment extends Fragment implements View.OnClickL
     }
 
     private void checkInBtnClicked() {
-        Log.i(TAG, "Button is " + String.valueOf(checkInBtn.isExpanded()));
-        if (checkInBtn.isExpanded()) {
+        if (checkInBtn.isClickable()) {
 
             boolean isValid = true;
 
@@ -549,18 +525,9 @@ public class TimeAttendantFastFragment extends Fragment implements View.OnClickL
                             Manifest.permission.ACCESS_FINE_LOCATION)
                             == PackageManager.PERMISSION_GRANTED) {
 
-                        //Request location updates:
-//                        locationManager.requestLocationUpdates(provider, 400, 1, this);/
                         gps = new GPSTracker(getContext());
                     }
-
-                } else {
-
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
-
                 }
-                return;
             }
 
         }
@@ -592,6 +559,7 @@ public class TimeAttendantFastFragment extends Fragment implements View.OnClickL
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder().addLocationRequest(locationRequest);
         builder.setAlwaysShow(true);
 
+        //for fix deprecate code -> https://developers.google.com/android/reference/com/google/android/gms/location/SettingsClient
         PendingResult<LocationSettingsResult> result = LocationServices.SettingsApi.checkLocationSettings(googleApiClient, builder.build());
         result.setResultCallback(this);
     }
@@ -627,22 +595,8 @@ public class TimeAttendantFastFragment extends Fragment implements View.OnClickL
     }
 
     public void getBeaconDevice() {
-        databaseRef.child("beacon_device").addListenerForSingleValueEvent(
-                new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        // Get beacon device from database
-                        if (dataSnapshot.getValue() != null) {
-                            BeaconDeviceModel beaconDevice = dataSnapshot.getValue(BeaconDeviceModel.class);
-                            beaconDeviceList = beaconDevice.getDeviceID();
-                            Log.i(TAG, beaconDeviceList.toString());
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-
-                    }
-                });
+        //Get form your service
+        this.beaconDeviceList.add("954e6dac-5612-4642-b2d1-d253429db36b");
+        this.beaconDeviceList.add("2f234454-cf6d-4a0f-adf2-f4911ba9ffa6");
     }
 }

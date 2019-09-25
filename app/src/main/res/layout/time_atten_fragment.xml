@@ -18,7 +18,7 @@
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/tisco_logo" />
+            android:src="@drawable/beacon_icon" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -28,18 +28,12 @@
 
     </LinearLayout>
 
-    <com.ekalips.fancybuttonproj.FancyButton
+    <Button
         android:id="@+id/checkinBtn"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_marginBottom="@dimen/activity_horizontal_margin"
-        fnBtn:btnStyle="stroke_fill"
-        fnBtn:fillColor="@color/colorPrimary"
-        fnBtn:hideFillAfterCollapse="true"
-        fnBtn:progressColor="@color/colorPrimary"
-        fnBtn:strokeColor="@android:color/transparent"
-        fnBtn:text="Check In"
-        fnBtn:textColor="#000" />
+         />
 
 </RelativeLayout>

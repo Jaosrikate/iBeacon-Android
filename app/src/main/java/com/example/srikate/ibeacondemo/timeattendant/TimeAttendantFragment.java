@@ -3,18 +3,18 @@ package com.example.srikate.ibeacondemo.timeattendant;
 import android.Manifest;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.Fragment;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.Toast;
 
 
-import com.ekalips.fancybuttonproj.FancyButton;
 import com.example.srikate.ibeacondemo.R;
 import com.example.srikate.ibeacondemo.utils.UiHelper;
+import com.google.android.material.snackbar.Snackbar;
 import com.tbruyelle.rxpermissions.RxPermissions;
 
 import java.text.DateFormat;
@@ -33,7 +33,7 @@ import rx.Observer;
 
 public class TimeAttendantFragment extends Fragment implements IBeaconScanner.Callback {
 
-    private FancyButton checkinBtn;
+    private Button checkinBtn;
     private Beacon beacon1;
     private Beacon beacon2;
     private Date date;
@@ -77,13 +77,14 @@ public class TimeAttendantFragment extends Fragment implements IBeaconScanner.Ca
         checkinBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (((FancyButton) view).isExpanded()) {
-                    ((FancyButton) view).collapse();
+//                if (((FancyButton) view).isExpanded()) {
+//                    ((FancyButton) view).collapse();
+//                    IBeaconScanner.getInstance().
                     IBeaconScanner.getInstance().startMonitoring(beacon1);
                     IBeaconScanner.getInstance().startMonitoring(beacon2);
-                } else {
-                    stopScanner();
-                }
+//                } else {
+//                    stopScanner();
+//                }
 
 
             }
@@ -112,7 +113,7 @@ public class TimeAttendantFragment extends Fragment implements IBeaconScanner.Ca
     }
 
     private void stopScanner() {
-        checkinBtn.expand();
+//        checkinBtn.expand();
         IBeaconScanner.getInstance().stop();
         IBeaconScanner.getInstance().stopMonitoring(beacon1);
         IBeaconScanner.getInstance().stopMonitoring(beacon2);
