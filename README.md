@@ -1,14 +1,20 @@
 # iBeacon
 
-Example android application for iBeacon simulator and scanner.
+Just install the apps in 2 devices for simulated the role of scanner and broadcaster :) 
 
-# App Demo features
+Build from Android Studio 3.5 tested on Xiaomi MI MIX3 and Samsung galaxy S8
 
-iBeacon Simulator
+# App Demo
+
+
+This app shows the example about iBeacon simulator is a company device (employer) and Scanner is an employee's device that check-in when arrived the area of the company.
+
+
+iBeacon Simulator -  touch the iBeacon stone for start broadcasting
 
 <img src="https://github.com/Jaosrikate/iBeacon-Android/blob/master/demo/simulatior.gif?raw=true" width="250">
 
-iBeacon Scanner
+iBeacon Scanner - Click the scan button for scan iBeacon (that broadcasting from this Apps.)
 
 <img src="https://github.com/Jaosrikate/iBeacon-Android/blob/master/demo/scanner.gif?raw=true" width="250">
 
